@@ -1,0 +1,31 @@
+# N-Queens — CUDA Implementation
+
+GPU-accelerated N-Queens solver using iterative backtracking with shared memory optimization.
+
+## Approach
+
+1. **Pregeneration**: The CPU generates all valid partial placements up to a fixed depth (4–6 rows depending on N), exploiting symmetry to halve the work.
+2. **GPU dispatch**: Each CUDA thread receives one partial and explores its entire subtree independently.
+3. **Shared memory stack**: The backtracking stack lives in shared memory (~4 cycle access) rather than global memory (~500 cycles), eliminating the main bottleneck of iterative backtracking on GPU.
+4. **Bank conflict elimination**: Arrays use transposed layout `[depth][tid]` so threads in a warp access consecutive addresses, avoiding shared memory bank conflicts.
+
+## Performance (RTX 4050)
+
+| N  | Time     | Solutions        |
+|----|----------|-----------------|
+| 15 | 0.037s   | 2,279,184        |
+| 17 | 0.226s   | 95,815,104       |
+| 20 | 67.4s    | 39,029,188,884   |
+
+## Build
+```bash
+make
+```
+
+Requires CUDA toolkit. For non-RTX 4050 GPUs, change `-arch=sm_89` in the Makefile to match your architecture.
+
+## Run
+```bash
+./nqueens_cuda
+Enter n: 17
+```
